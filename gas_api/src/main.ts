@@ -25,6 +25,9 @@ function doGet(
       case 'relations':
         return makeSuccessResponse(year, fetchRelations(year));
 
+      case 'hanchans':
+        return makeSuccessResponse(year, fetchHanchans());
+
       default:
         return makeErrorResponse(
           `Unknown type: "${type}". Use ranking, participants, or relations.`

@@ -5,8 +5,10 @@
  * PROJECT_ID と DATASET を実際の値に変更すること
  */
 
-const PROJECT_ID = 'YOUR_GCP_PROJECT_ID';
+const PROJECT_ID = 'kaw-ai';         // kawai_cup データセット用（ランキング等）
 const DATASET = 'kawai_cup';
+const MM_PROJECT_ID = 'mahjonganalyzer'; // MM データセット用（半荘データ）
+const DATASET_MM = 'MM';
 
 /** ランキングデータを取得する (point_total 降順) */
 function fetchRanking(year: number): any[] {
@@ -71,6 +73,34 @@ function fetchRelations(year: number): any[] {
     target_id: row[1],
     vote_count: parseInt(row[2] || '0', 10),
     point_sum: parseInt(row[3] || '0', 10),
+  }));
+}
+
+/** 半荘データ一覧を取得する (CREATED_AT 降順) */
+function fetchHanchans(limit: number = 100): any[] {
+  const sql = `
+    SELECT
+      HANCHAN_ID,
+      LINE_USER_ID,
+      SOTEN,
+      POINT,
+      POINT_ZONE,
+      RANK,
+      CREATED_AT
+    FROM \`${MM_PROJECT_ID}.${DATASET_MM}.J_HANCHANS_D\`
+    ORDER BY CREATED_AT DESC
+    LIMIT ${limit}
+  `;
+
+  const rows = runQuery(sql);
+  return rows.map((row: any[]) => ({
+    hanchan_id: row[0],
+    line_user_id: row[1],
+    soten: parseFloat(row[2] || '0'),
+    point: parseFloat(row[3] || '0'),
+    point_zone: parseFloat(row[4] || '0'),
+    rank: parseInt(row[5] || '0', 10),
+    created_at: row[6] || '',
   }));
 }
 

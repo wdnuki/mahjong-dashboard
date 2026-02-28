@@ -6,6 +6,7 @@ import '../../widgets/year_selector.dart';
 import '../../widgets/loading_indicator.dart';
 import '../../widgets/ranking_bar_chart.dart';
 import 'ranking_table.dart';
+import '../hanchan/hanchan_screen.dart';
 
 class RankingScreen extends StatefulWidget {
   const RankingScreen({super.key});
@@ -48,6 +49,14 @@ class _RankingScreenState extends State<RankingScreen> {
       appBar: AppBar(
         title: const Text('Kawai Cup ランキング'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.table_rows),
+            tooltip: '半荘一覧',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HanchanScreen()),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: ListenableBuilder(

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/ranking_entry.dart';
 import '../models/participant.dart';
 import '../models/relation.dart';
+import '../models/hanchan_entry.dart';
 
 /// GAS API との通信を担当するサービス
 ///
@@ -18,11 +19,10 @@ class ApiService {
 
   ApiService({http.Client? client}) : _client = client ?? http.Client();
 
-  Future<List<Map<String, dynamic>>> _get(String type, int year) async {
-    final uri = Uri.parse(_baseUrl).replace(queryParameters: {
-      'type': type,
-      'year': year.toString(),
-    });
+  Future<List<Map<String, dynamic>>> _get(String type, [int? year]) async {
+    final params = <String, String>{'type': type};
+    if (year != null) params['year'] = year.toString();
+    final uri = Uri.parse(_baseUrl).replace(queryParameters: params);
 
     final response = await _client.get(uri, headers: {
       'Accept': 'application/json',
@@ -53,6 +53,11 @@ class ApiService {
   Future<List<Relation>> fetchRelations(int year) async {
     final data = await _get('relations', year);
     return data.map(Relation.fromJson).toList();
+  }
+
+  Future<List<HanchanEntry>> fetchHanchans() async {
+    final data = await _get('hanchans');
+    return data.map(HanchanEntry.fromJson).toList();
   }
 
   void dispose() => _client.close();
