@@ -1,0 +1,14 @@
+{
+  "name": "mahjong-dashboard-gas-api",
+  "version": "1.0.0",
+  "description": "GAS API for Mahjong Dashboard (Kawai Cup)",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "push": "npm run build && clasp push"
+  },
+  "devDependencies": {
+    "@types/google-apps-script": "^1.0.83",
+    "typescript": "^5.3.3"
+  }
+}

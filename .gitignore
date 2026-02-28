@@ -1,0 +1,17 @@
+# GAS
+gas_api/node_modules/
+gas_api/dist/
+
+# Flutter
+flutter_app/build/
+flutter_app/.dart_tool/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+flutter_app/.packages
+
+# Firebase
+.firebase/
+
+# OS
+.DS_Store
+Thumbs.db

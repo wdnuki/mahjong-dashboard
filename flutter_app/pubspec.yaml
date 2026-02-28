@@ -1,0 +1,27 @@
+name: mahjong_dashboard
+description: Kawai Cup event ranking dashboard.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP API calls to GAS
+  http: ^1.2.1
+
+  # Charts for ranking visualization
+  fl_chart: ^0.66.2
+
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
