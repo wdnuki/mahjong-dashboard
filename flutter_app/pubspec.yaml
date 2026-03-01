@@ -1,5 +1,5 @@
 name: mahjong_dashboard
-description: Kawai Cup event ranking dashboard.
+description: Mahjong game results dashboard.
 publish_to: 'none'
 version: 1.0.0+1
 

@@ -1,11 +1,11 @@
 {
-  "name": "Kawai Cup Dashboard",
-  "short_name": "KawaiCup",
+  "name": "Mahjong Dashboard",
+  "short_name": "MahjongDB",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#E91E8C",
-  "theme_color": "#E91E8C",
-  "description": "Kawai Cup event ranking dashboard",
+  "background_color": "#1565C0",
+  "theme_color": "#1565C0",
+  "description": "Mahjong game results dashboard",
   "orientation": "any",
   "prefer_related_applications": false,
   "icons": [

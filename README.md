@@ -1,6 +1,6 @@
-# mahjong-dashboard
+# Mahjong Dashboard
 
-カワイカップ（イベント投票）のランキングを可視化するダッシュボード。
+麻雀の半荘成績を可視化するダッシュボード。
 
 ## アーキテクチャ
 
@@ -8,8 +8,8 @@
 Flutter Web (Firebase Hosting)
     ↓ HTTP GET
 GAS Web App (Google Apps Script)
-    ↓ BigQuery API
-BigQuery (kawai_votes, kawai_participants)
+    ↓ BigQuery Advanced Service
+BigQuery: mahjonganalyzer.MM.J_HANCHANS_D
 ```
 
 ## ディレクトリ構成
@@ -19,71 +19,65 @@ mahjong-dashboard/
 ├── flutter_app/    # Flutter Web フロントエンド
 ├── gas_api/        # GAS API (clasp + TypeScript)
 ├── docs/           # 設計書・仕様書
+├── deploy.sh       # 一括ビルド・デプロイスクリプト
 ├── firebase.json   # Firebase Hosting 設定
 └── .firebaserc     # Firebase プロジェクト設定
 ```
 
 ## クイックスタート
 
-### GAS API のデプロイ
+### 一括デプロイ（推奨）
+
+```bash
+# Firebase CI トークンをファイルに保存（初回のみ）
+firebase login:ci > .firebase_token   # 表示されたトークンをコピーして保存
+
+# 全体デプロイ（GAS + Flutter + Firebase）
+./deploy.sh
+
+# GAS のみ
+./deploy.sh --gas-only
+
+# Flutter + Firebase のみ
+./deploy.sh --flutter-only
+```
+
+### 手動デプロイ: GAS API
 
 ```bash
 cd gas_api
 npm install
-# clasp login & GASプロジェクト作成後:
-npm run build
-clasp push
-# GAS エディタで Web App としてデプロイ → exec URL を控える
+npm run build          # TypeScript → JS (dist/)
+cp appsscript.json dist/
+clasp push --force
+clasp deploy -i "DEPLOYMENT_ID"
 ```
 
-### Flutter Web の起動（開発）
+### 手動デプロイ: Flutter Web
 
 ```bash
 cd flutter_app
 flutter pub get
-flutter run -d chrome \
-  --dart-define=API_BASE_URL=https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec
-```
-
-### Flutter Web のビルド（本番）
-
-```bash
-cd flutter_app
 flutter build web \
-  --dart-define=API_BASE_URL=https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec \
+  --dart-define=API_BASE_URL=https://script.google.com/macros/s/DEPLOYMENT_ID/exec \
   --base-href /
+firebase deploy --only hosting --token "$(cat .firebase_token)"
 ```
 
-### Firebase Hosting へのデプロイ
+## 環境変数・設定
 
-```bash
-firebase login
-firebase deploy --only hosting
-```
-
-## 環境変数
-
-| 変数名 | 説明 | 渡し方 |
+| 項目 | 場所 | 値 |
 |---|---|---|
-| `API_BASE_URL` | GAS Web App の exec URL | `--dart-define` |
+| GAS Script ID | `gas_api/.clasp.json` | 設定済み |
+| Firebase Project | `.firebaserc` | `mahjong-dashboard-e72c9` |
+| Firebase Token | `.firebase_token` | gitignore（手動設定） |
+| API URL | `deploy.sh` 内の `GAS_API_URL` | 設定済み |
 
-## 設定が必要なプレースホルダー
+## データソース
 
-| ファイル | 変更箇所 |
-|---|---|
-| `gas_api/.clasp.json` | `YOUR_SCRIPT_ID_HERE` |
-| `gas_api/src/bigquery.ts` | `YOUR_GCP_PROJECT_ID` |
-| `.firebaserc` | `YOUR_FIREBASE_PROJECT_ID` |
+- BigQuery テーブル: `mahjonganalyzer.MM.J_HANCHANS_D`
+- 取得データ: 半荘成績（プレイヤー、得点、日時など）
 
-## 開発フェーズ
+## 画面構成
 
-- **Phase 1** (現在): ランキング表示、年度切替、ソート
-- **Phase 2**: 個人詳細ページ、年度別推移
-- **Phase 3**: 投票相関図
-
-## 関連ドキュメント
-
-- [アーキテクチャ](docs/architecture.md)
-- [API仕様](docs/api_spec.md)
-- [データスキーマ](docs/data_schema.md)
-- [デプロイ手順](docs/deployment.md)
+- **半荘一覧** (`HanchanScreen`): 最新の半荘成績一覧

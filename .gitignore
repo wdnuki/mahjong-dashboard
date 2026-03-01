@@ -11,6 +11,7 @@ flutter_app/.packages
 
 # Firebase
 .firebase/
+.firebase_token
 
 # OS
 .DS_Store
