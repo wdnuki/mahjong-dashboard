@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../models/ranking_entry.dart';
 import '../../providers/ranking_provider.dart';
+import '../participant/participant_detail_screen.dart';
 
 /// ランキングテーブル
 /// ヘッダーをタップするとソート順を切り替える
+/// 行をタップすると個人詳細ページへ遷移する
 class RankingTable extends StatelessWidget {
   const RankingTable({
     super.key,
     required this.entries,
     required this.sort,
     required this.onSortChanged,
+    required this.year,
   });
 
   final List<RankingEntry> entries;
   final RankingSort sort;
   final ValueChanged<RankingSort> onSortChanged;
+  final int year;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +50,15 @@ class RankingTable extends StatelessWidget {
           ],
           rows: entries.map((entry) {
             return DataRow(
+              onSelectChanged: (_) => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ParticipantDetailScreen(
+                    entry: entry,
+                    year: year,
+                  ),
+                ),
+              ),
               cells: [
                 DataCell(Text('${entry.rank}')),
                 DataCell(Text(entry.displayName)),

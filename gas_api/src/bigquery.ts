@@ -104,6 +104,34 @@ function fetchHanchans(limit: number = 100): any[] {
   }));
 }
 
+/** 参加者の年度別履歴データを取得する */
+function fetchParticipantHistory(participantId: string): any[] {
+  // シングルクォートをエスケープして SQL インジェクションを防ぐ
+  const safeId = participantId.replace(/'/g, "''");
+  const sql = `
+    SELECT
+      p.event_year,
+      p.display_name,
+      COALESCE(COUNT(v.voter_id), 0) AS vote_count,
+      COALESCE(SUM(v.vote_point), 0) AS point_total
+    FROM \`${PROJECT_ID}.${DATASET}.kawai_participants\` p
+    LEFT JOIN \`${PROJECT_ID}.${DATASET}.kawai_votes\` v
+      ON p.participant_id = v.target_id
+      AND p.event_year = v.event_year
+    WHERE p.participant_id = '${safeId}'
+    GROUP BY p.event_year, p.display_name
+    ORDER BY p.event_year ASC
+  `;
+
+  const rows = runQuery(sql);
+  return rows.map((row: any[]) => ({
+    event_year: parseInt(row[0] || '0', 10),
+    display_name: row[1] || '',
+    vote_count: parseInt(row[2] || '0', 10),
+    point_total: parseInt(row[3] || '0', 10),
+  }));
+}
+
 /**
  * BigQuery 同期クエリ実行のラッパー
  * rows が null の場合は空配列を返す

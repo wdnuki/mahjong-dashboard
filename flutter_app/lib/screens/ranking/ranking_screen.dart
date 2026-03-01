@@ -147,6 +147,7 @@ class _RankingScreenState extends State<RankingScreen> {
                   entries: _rankingNotifier.entries,
                   sort: _rankingNotifier.sort,
                   onSortChanged: _rankingNotifier.setSort,
+                  year: _yearNotifier.selectedYear,
                 ),
               ),
             ],

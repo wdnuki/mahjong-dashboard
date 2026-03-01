@@ -28,6 +28,12 @@ function doGet(
       case 'hanchans':
         return makeSuccessResponse(year, fetchHanchans());
 
+      case 'history': {
+        const id = params['id'] || '';
+        if (!id) return makeErrorResponse('Missing parameter: id');
+        return makeSuccessResponse(year, fetchParticipantHistory(id));
+      }
+
       default:
         return makeErrorResponse(
           `Unknown type: "${type}". Use ranking, participants, or relations.`
