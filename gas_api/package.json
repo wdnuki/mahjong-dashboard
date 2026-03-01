@@ -8,6 +8,7 @@
     "push": "npm run build && clasp push"
   },
   "devDependencies": {
+    "@google/clasp": "^3.2.0",
     "@types/google-apps-script": "^1.0.83",
     "typescript": "^5.3.3"
   }
