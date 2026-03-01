@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "mahjong-dashboard-e72c9",
     "public": "flutter_app/build/web",
     "ignore": [
       "firebase.json",

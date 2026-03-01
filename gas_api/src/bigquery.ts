@@ -5,7 +5,7 @@
  * PROJECT_ID と DATASET を実際の値に変更すること
  */
 
-const PROJECT_ID = 'kaw-ai';         // kawai_cup データセット用（ランキング等）
+const PROJECT_ID = 'mahjonganalyzer'; // kawai_cup データセット用（ランキング等）
 const DATASET = 'kawai_cup';
 const MM_PROJECT_ID = 'mahjonganalyzer'; // MM データセット用（半荘データ）
 const DATASET_MM = 'MM';
