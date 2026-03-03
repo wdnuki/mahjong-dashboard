@@ -6,10 +6,10 @@
 
 ```
 Flutter Web (Firebase Hosting)
-    ↓ HTTP GET
-GAS Web App (Google Apps Script)
-    ↓ BigQuery Advanced Service
-BigQuery: mahjonganalyzer.MM.J_HANCHANS_D
+    ↓ HTTP GET /api?type=hanchans
+Cloud Functions Gen2 (Node.js 20)
+    ↓ BigQuery クライアント
+BigQuery: mahjonganalyzer.MM.V_HANCHANS
 ```
 
 ## ディレクトリ構成
@@ -17,66 +17,62 @@ BigQuery: mahjonganalyzer.MM.J_HANCHANS_D
 ```
 mahjong-dashboard/
 ├── flutter_app/    # Flutter Web フロントエンド
-├── gas_api/        # GAS API (clasp + TypeScript)
+├── functions/      # Cloud Functions API (TypeScript + esbuild)
+├── gas_api/        # 旧 GAS API (参照用・使用停止)
 ├── docs/           # 設計書・仕様書
-├── deploy.sh       # 一括ビルド・デプロイスクリプト
-├── firebase.json   # Firebase Hosting 設定
+├── deploy.sh       # ビルド・デプロイスクリプト
+├── Dockerfile      # Docker イメージ (Flutter + Firebase CLI)
+├── docker-compose.yml
+├── firebase.json   # Firebase Hosting + Functions 設定
 └── .firebaserc     # Firebase プロジェクト設定
 ```
 
+## URL
+
+| 環境 | URL |
+|---|---|
+| Firebase Hosting | https://mahjong-dashboard-e72c9.web.app |
+| API (Hosting 経由) | https://mahjong-dashboard-e72c9.web.app/api |
+| API (Functions 直接) | https://us-central1-mahjong-dashboard-e72c9.cloudfunctions.net/api |
+
 ## クイックスタート
 
-### 一括デプロイ（推奨）
+### 前提条件
 
-```bash
-# Firebase CI トークンをファイルに保存（初回のみ）
-firebase login:ci > .firebase_token   # 表示されたトークンをコピーして保存
+- Docker Desktop (Windows)
+- `.env` ファイルに `FIREBASE_TOKEN` を設定済み（→ [初回セットアップ](docs/deployment.md)）
 
-# 全体デプロイ（GAS + Flutter + Firebase）
-./deploy.sh
+### デプロイ（Docker で完結）
 
-# GAS のみ
-./deploy.sh --gas-only
+```cmd
+REM Functions + Hosting を一括デプロイ
+docker compose run --rm deploy bash deploy.sh all
 
-# Flutter + Firebase のみ
-./deploy.sh --flutter-only
+REM Functions のみ
+docker compose run --rm deploy bash deploy.sh functions
+
+REM Hosting のみ（Flutter ビルド含む）
+docker compose run --rm deploy bash deploy.sh hosting
 ```
 
-### 手動デプロイ: GAS API
+## API エンドポイント
 
-```bash
-cd gas_api
-npm install
-npm run build          # TypeScript → JS (dist/)
-cp appsscript.json dist/
-clasp push --force
-clasp deploy -i "DEPLOYMENT_ID"
-```
+`GET /api?type=<type>&year=<year>&month=<month>`
 
-### 手動デプロイ: Flutter Web
-
-```bash
-cd flutter_app
-flutter pub get
-flutter build web \
-  --dart-define=API_BASE_URL=https://script.google.com/macros/s/DEPLOYMENT_ID/exec \
-  --base-href /
-firebase deploy --only hosting --token "$(cat .firebase_token)"
-```
-
-## 環境変数・設定
-
-| 項目 | 場所 | 値 |
+| type | 説明 | 必須パラメータ |
 |---|---|---|
-| GAS Script ID | `gas_api/.clasp.json` | 設定済み |
-| Firebase Project | `.firebaserc` | `mahjong-dashboard-e72c9` |
-| Firebase Token | `.firebase_token` | gitignore（手動設定） |
-| API URL | `deploy.sh` 内の `GAS_API_URL` | 設定済み |
+| `hanchans` | 半荘一覧 | year, month |
+| `ranking` | 投票ランキング | year |
+| `participants` | 参加者一覧 | year |
+| `relations` | 投票相関 | year |
+| `history` | 参加者履歴 | id |
 
 ## データソース
 
-- BigQuery テーブル: `mahjonganalyzer.MM.J_HANCHANS_D`
-- 取得データ: 半荘成績（プレイヤー、得点、日時など）
+| データ | BigQuery プロジェクト | データセット | テーブル/ビュー |
+|---|---|---|---|
+| 半荘成績 | `mahjonganalyzer` | `MM` | `V_HANCHANS` |
+| 投票データ | `mahjonganalyzer` | `kawai_cup` | (未作成) |
 
 ## 画面構成
 
