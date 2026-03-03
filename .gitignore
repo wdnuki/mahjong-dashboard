@@ -1,6 +1,10 @@
-# GAS
+# GAS (アーカイブ)
 gas_api/node_modules/
 gas_api/dist/
+
+# Cloud Functions
+functions/node_modules/
+functions/lib/
 
 # Flutter
 flutter_app/build/

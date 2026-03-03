@@ -1,0 +1,24 @@
+.git
+.github
+docs/
+
+# Flutter ビルド成果物
+flutter_app/build/
+flutter_app/.dart_tool/
+
+# Cloud Functions ビルド成果物・依存
+functions/node_modules/
+functions/lib/
+
+# GAS (アーカイブ)
+gas_api/node_modules/
+gas_api/dist/
+
+# Firebase
+.firebase/
+
+# 秘密情報
+.env
+*-sa.json
+*service-account*.json
+*.clasprc.json

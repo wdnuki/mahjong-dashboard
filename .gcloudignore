@@ -1,0 +1,18 @@
+# gcloud コマンドでアップロードする際に除外するファイル
+.gcloudignore
+.git
+.github
+
+# Flutter
+flutter_app/
+
+# GAS
+gas_api/
+
+# ドキュメント・設定
+docs/
+Dockerfile
+docker-compose.yml
+deploy.sh
+.env
+*.md

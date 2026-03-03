@@ -1,63 +1,19 @@
-version: "3.9"
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Mahjong Dashboard — デプロイ用 Docker Compose
-#
-# 使い方:
-#   docker-compose run --rm deploy                  # 全デプロイ
-#   docker-compose run --rm deploy bash deploy.sh --gas-only
-#   docker-compose run --rm deploy bash deploy.sh --flutter-only
-#
-# 事前準備:
-#   cp .env.example .env  → 各パスを設定
-#   bash scripts/setup_auth.sh  → 初回認証セットアップ
-# ─────────────────────────────────────────────────────────────────────────────
-
 services:
   deploy:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: mahjong-dashboard-deploy:latest
-
+    build: .
+    image: mahjong-dashboard-local:latest
     volumes:
-      # ── clasp OAuth token ─────────────────────────────────────────────────
-      # ホストの ~/.clasprc.json をコンテナにマウント
-      # CLASP_CREDS_HOST_PATH で上書き可能（.env で設定）
-      - type: bind
-        source: ${CLASP_CREDS_HOST_PATH:-~/.clasprc.json}
-        target: /root/.clasprc.json
-        read_only: true
-
-      # ── GCP Service Account JSON ──────────────────────────────────────────
-      # .env の GOOGLE_APPLICATION_CREDENTIALS_HOST_PATH に指定したファイルをマウント
-      - type: bind
-        source: ${GOOGLE_APPLICATION_CREDENTIALS_HOST_PATH:?GOOGLE_APPLICATION_CREDENTIALS_HOST_PATH is required. Run scripts/setup_auth.sh}
-        target: /root/.config/gcp-sa.json
-        read_only: true
-
-      # ── 認証情報の永続ボリューム ─────────────────────────────────────────
-      # コンテナを再作成しても /root/.config 以下の認証情報が保持される
-      - clasp-config:/root/.config
-
+      # プロジェクトソース (ライブマウント)
+      - .:/workspace
+      # Flutter パッケージキャッシュ
+      - pub-cache:/root/.pub-cache
     environment:
-      # Firebase CLI が Service Account を自動検出するためのパス（コンテナ内）
-      GOOGLE_APPLICATION_CREDENTIALS: /root/.config/gcp-sa.json
-      # デプロイモード: all | gas | flutter（.env で上書き可）
-      DEPLOY_MODE: ${DEPLOY_MODE:-all}
-
-    # .env ファイルから環境変数を読み込む
-    env_file:
-      - path: .env
-        required: false  # .env がなくても起動できる（環境変数で直接指定する場合）
-
-    working_dir: /workspace/mahjong-dashboard
-    command: ["bash", "deploy.sh"]
-
-    # 対話的フォールバック（初回 clasp login など）に対応
+      # firebase login:ci で取得したトークンを .env に設定する
+      - FIREBASE_TOKEN=${FIREBASE_TOKEN:?Run 'firebase login:ci' and set FIREBASE_TOKEN in .env}
+    working_dir: /workspace
+    command: bash deploy.sh all
     stdin_open: true
     tty: true
 
 volumes:
-  clasp-config:
-    name: mahjong-dashboard-clasp-config
+  pub-cache:
