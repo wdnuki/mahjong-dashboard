@@ -2,9 +2,10 @@
  * GAS Web App エントリポイント
  *
  * エンドポイント:
- *   ?type=ranking&year=2026     → ランキングデータ
- *   ?type=participants&year=2026 → 参加者一覧
- *   ?type=relations&year=2026   → 投票相関データ
+ *   ?type=ranking&year=2026          → ランキングデータ
+ *   ?type=participants&year=2026     → 参加者一覧
+ *   ?type=relations&year=2026        → 投票相関データ
+ *   ?type=hanchans&year=2026&month=3 → 半荘一覧（年月指定）
  */
 
 function doGet(
@@ -14,6 +15,7 @@ function doGet(
     const params = e.parameter as { [key: string]: string };
     const type = params['type'];
     const year = parseYear(params);
+    const month = parseMonth(params);
 
     switch (type) {
       case 'ranking':
@@ -26,7 +28,7 @@ function doGet(
         return makeSuccessResponse(year, fetchRelations(year));
 
       case 'hanchans':
-        return makeSuccessResponse(year, fetchHanchans());
+        return makeSuccessResponse(year, fetchHanchans(year, month));
 
       case 'history': {
         const id = params['id'] || '';

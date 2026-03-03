@@ -29,3 +29,11 @@ function parseYear(params: { [key: string]: string }): number {
   const parsed = parseInt(raw, 10);
   return isNaN(parsed) ? new Date().getFullYear() : parsed;
 }
+
+/** クエリパラメータから month を整数として取得。省略時は現在月 */
+function parseMonth(params: { [key: string]: string }): number {
+  const raw = params['month'];
+  if (!raw) return new Date().getMonth() + 1;
+  const parsed = parseInt(raw, 10);
+  return isNaN(parsed) || parsed < 1 || parsed > 12 ? new Date().getMonth() + 1 : parsed;
+}

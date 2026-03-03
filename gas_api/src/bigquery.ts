@@ -76,31 +76,39 @@ function fetchRelations(year: number): any[] {
   }));
 }
 
-/** 半荘データ一覧を取得する (CREATED_AT 降順) */
-function fetchHanchans(limit: number = 100): any[] {
+/** 半荘データ一覧を取得する（V_HANCHANS、年月フィルター対応） */
+function fetchHanchans(year: number, month: number): any[] {
   const sql = `
     SELECT
       HANCHAN_ID,
+      KANRI_DATE,
       LINE_USER_ID,
+      NICK_NAME,
+      LINE_USER_NAME,
       SOTEN,
       POINT,
-      POINT_ZONE,
       RANK,
-      CREATED_AT
-    FROM \`${MM_PROJECT_ID}.${DATASET_MM}.J_HANCHANS_D\`
-    ORDER BY CREATED_AT DESC
-    LIMIT ${limit}
+      DEAD_FLAG,
+      KILL_CNT
+    FROM \`${MM_PROJECT_ID}.${DATASET_MM}.V_HANCHANS\`
+    WHERE
+      KANRI_DATE >= DATE(${year}, ${month}, 1)
+      AND KANRI_DATE < DATE_ADD(DATE(${year}, ${month}, 1), INTERVAL 1 MONTH)
+    ORDER BY HANCHAN_ID DESC, RANK ASC
   `;
 
   const rows = runQuery(sql);
   return rows.map((row: any[]) => ({
     hanchan_id: row[0],
-    line_user_id: row[1],
-    soten: parseFloat(row[2] || '0'),
-    point: parseFloat(row[3] || '0'),
-    point_zone: parseFloat(row[4] || '0'),
-    rank: parseInt(row[5] || '0', 10),
-    created_at: row[6] || '',
+    kanri_date: row[1] || '',
+    line_user_id: row[2],
+    nick_name: row[3] || '',
+    line_user_name: row[4] || '',
+    soten: parseFloat(row[5] || '0'),
+    point: parseFloat(row[6] || '0'),
+    rank: parseInt(row[7] || '0', 10),
+    dead_flag: row[8] || '',
+    kill_cnt: parseInt(row[9] || '0', 10),
   }));
 }
 
