@@ -16,3 +16,9 @@ flutter_app/.packages
 # OS
 .DS_Store
 Thumbs.db
+
+# Deploy credentials (secrets — never commit)
+.env
+*.clasprc.json
+*-sa.json
+*service-account*.json
