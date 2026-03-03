@@ -36,6 +36,14 @@ class _HanchanScreenState extends State<HanchanScreen> {
       appBar: AppBar(
         title: const Text('半荘一覧'),
         actions: [
+          ListenableBuilder(
+            listenable: _notifier,
+            builder: (context, _) => _YearMonthSelector(
+              year: _notifier.year,
+              month: _notifier.month,
+              onChanged: (y, m) => _notifier.load(year: y, month: m),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _notifier.load,
@@ -83,6 +91,48 @@ class _HanchanScreenState extends State<HanchanScreen> {
   }
 }
 
+class _YearMonthSelector extends StatelessWidget {
+  const _YearMonthSelector({
+    required this.year,
+    required this.month,
+    required this.onChanged,
+  });
+
+  final int year;
+  final int month;
+  final void Function(int year, int month) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final years = List.generate(3, (i) => now.year - i);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DropdownButton<int>(
+          value: year,
+          underline: const SizedBox(),
+          items: years
+              .map((y) => DropdownMenuItem(value: y, child: Text('$y年')))
+              .toList(),
+          onChanged: (y) => onChanged(y!, month),
+        ),
+        const SizedBox(width: 4),
+        DropdownButton<int>(
+          value: month,
+          underline: const SizedBox(),
+          items: List.generate(12, (i) => i + 1)
+              .map((m) => DropdownMenuItem(value: m, child: Text('$m月')))
+              .toList(),
+          onChanged: (m) => onChanged(year, m!),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+}
+
 class _HanchanTable extends StatelessWidget {
   const _HanchanTable({required this.entries});
 
@@ -90,6 +140,8 @@ class _HanchanTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hanchanIds = entries.map((e) => e.hanchanId).toList();
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
@@ -98,29 +150,61 @@ class _HanchanTable extends StatelessWidget {
             Theme.of(context).colorScheme.primaryContainer,
           ),
           columns: const [
+            DataColumn(label: Text('日付')),
             DataColumn(label: Text('順位'), numeric: true),
-            DataColumn(label: Text('半荘ID')),
-            DataColumn(label: Text('LINE USER ID')),
+            DataColumn(label: Text('名前')),
             DataColumn(label: Text('素点'), numeric: true),
             DataColumn(label: Text('ポイント'), numeric: true),
-            DataColumn(label: Text('日時')),
+            DataColumn(label: Text('飛び')),
+            DataColumn(label: Text('キル'), numeric: true),
           ],
-          rows: entries.map((e) {
-            final shortId = e.hanchanId.length > 8
-                ? '…${e.hanchanId.substring(e.hanchanId.length - 8)}'
-                : e.hanchanId;
-            return DataRow(cells: [
-              DataCell(Text('${e.rank}')),
-              DataCell(Text(shortId)),
-              DataCell(Text(e.lineUserId)),
-              DataCell(Text('${e.soten.toStringAsFixed(0)}')),
-              DataCell(Text(
-                e.point.toStringAsFixed(1),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              )),
-              DataCell(Text(e.createdAt)),
-            ]);
-          }).toList(),
+          rows: List.generate(entries.length, (i) {
+            final e = entries[i];
+            final isNewHanchan =
+                i == 0 || hanchanIds[i - 1] != e.hanchanId;
+
+            // 半荘ごとに交互に背景色を変えて区別しやすくする
+            final hanchanIndex = entries
+                .take(i + 1)
+                .map((e) => e.hanchanId)
+                .toSet()
+                .length - 1;
+            final rowColor = hanchanIndex.isEven
+                ? Theme.of(context).colorScheme.surfaceContainerLow
+                : null;
+
+            return DataRow(
+              color: WidgetStateProperty.all(rowColor),
+              cells: [
+                DataCell(Text(
+                  isNewHanchan ? e.kanriDate : '',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                )),
+                DataCell(Text('${e.rank}')),
+                DataCell(Text(
+                  e.displayName,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                )),
+                DataCell(Text(e.soten.toStringAsFixed(0))),
+                DataCell(Text(
+                  e.point.toStringAsFixed(1),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: e.point >= 0
+                        ? Colors.blue[700]
+                        : Colors.red[700],
+                  ),
+                )),
+                DataCell(Text(
+                  e.deadFlag,
+                  style: TextStyle(
+                    color: e.deadFlag == '飛び' ? Colors.red[600] : null,
+                  ),
+                )),
+                DataCell(Text(e.killCnt > 0 ? '${e.killCnt}' : '')),
+              ],
+            );
+          }),
         ),
       ),
     );

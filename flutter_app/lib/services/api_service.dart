@@ -6,14 +6,14 @@ import '../models/participant_history.dart';
 import '../models/relation.dart';
 import '../models/hanchan_entry.dart';
 
-/// GAS API との通信を担当するサービス
+/// Cloud Functions API との通信を担当するサービス
 ///
 /// API_BASE_URL は --dart-define で注入する:
-///   flutter run --dart-define=API_BASE_URL=https://script.google.com/macros/s/XXXXX/exec
+///   flutter build web --dart-define=API_BASE_URL=https://mahjong-dashboard-e72c9.web.app/api
 class ApiService {
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://script.google.com/macros/s/REPLACE_ME/exec',
+    defaultValue: 'https://mahjong-dashboard-e72c9.web.app/api',
   );
 
   final http.Client _client;
@@ -61,8 +61,8 @@ class ApiService {
     return data.map(Relation.fromJson).toList();
   }
 
-  Future<List<HanchanEntry>> fetchHanchans() async {
-    final data = await _get('hanchans');
+  Future<List<HanchanEntry>> fetchHanchans(int year, int month) async {
+    final data = await _get('hanchans', year, {'month': month.toString()});
     return data.map(HanchanEntry.fromJson).toList();
   }
 
