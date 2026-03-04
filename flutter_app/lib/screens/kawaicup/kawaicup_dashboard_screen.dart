@@ -125,6 +125,13 @@ class _CumulativeLineChart extends StatelessWidget {
   const _CumulativeLineChart({required this.data});
   final List<CumulativeScore> data;
 
+  // X軸: 0(スタート) 〜 31(3/31) 固定
+  static const _minX = 0.0;
+  static const _maxX = 31.0;
+
+  // "2026/03/05" → 5
+  static int _dayOf(String kanriDate) => int.parse(kanriDate.substring(8));
+
   static const _colors = [
     Color(0xFFE91E8C),
     Color(0xFF2196F3),
@@ -140,22 +147,18 @@ class _CumulativeLineChart extends StatelessWidget {
       return const Center(child: Text('データがありません'));
     }
 
-    // プレイヤーごとにデータを分割
     final players = data.map((e) => e.nickName).toSet().toList()..sort();
-    // 日付一覧（X軸ラベル用）
-    final dates = data.map((e) => e.kanriDate).toSet().toList()..sort();
-    final dateIndex = {for (var i = 0; i < dates.length; i++) dates[i]: i};
 
     final lineBars = players.asMap().entries.map((entry) {
       final idx = entry.key;
       final player = entry.value;
-      final spots = data
-          .where((e) => e.nickName == player)
-          .map((e) => FlSpot(
-                dateIndex[e.kanriDate]!.toDouble(),
-                e.cumPoint,
-              ))
-          .toList();
+      // index 0 = スタート(値0)、以降は日付の日部分をそのままX座標に使用
+      final spots = [
+        const FlSpot(0, 0),
+        ...data
+            .where((e) => e.nickName == player)
+            .map((e) => FlSpot(_dayOf(e.kanriDate).toDouble(), e.cumPoint)),
+      ];
       return LineChartBarData(
         spots: spots,
         color: _colors[idx % _colors.length],
@@ -165,8 +168,8 @@ class _CumulativeLineChart extends StatelessWidget {
       );
     }).toList();
 
-    // Y軸の範囲を計算
-    final allPoints = data.map((e) => e.cumPoint);
+    // Y軸の範囲（0を必ず含める）
+    final allPoints = data.map((e) => e.cumPoint).toList()..add(0);
     final minY = allPoints.reduce((a, b) => a < b ? a : b);
     final maxY = allPoints.reduce((a, b) => a > b ? a : b);
     final yPad = ((maxY - minY) * 0.1).abs().clamp(10.0, double.infinity);
@@ -176,8 +179,8 @@ class _CumulativeLineChart extends StatelessWidget {
         Expanded(
           child: LineChart(
             LineChartData(
-              minX: 0,
-              maxX: (dates.length - 1).toDouble(),
+              minX: _minX,
+              maxX: _maxX,
               minY: minY - yPad,
               maxY: maxY + yPad,
               lineBarsData: lineBars,
@@ -196,11 +199,12 @@ class _CumulativeLineChart extends StatelessWidget {
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 32,
-                    interval: (dates.length / 5).ceilToDouble().clamp(1, double.infinity),
+                    interval: 5,
                     getTitlesWidget: (value, meta) {
-                      final i = value.toInt();
-                      if (i < 0 || i >= dates.length) return const SizedBox();
-                      final label = dates[i].substring(5); // MM/dd
+                      final d = value.toInt();
+                      // 0=スタート, 5, 10, 15, 20, 25, 31 のみ表示
+                      if (d != 0 && d % 5 != 0 && d != 31) return const SizedBox();
+                      final label = d == 0 ? '開始' : '3/$d';
                       return Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(label, style: const TextStyle(fontSize: 10)),
