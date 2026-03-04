@@ -2,8 +2,7 @@
 # scripts/setup_auth.sh — 初回認証セットアップ
 #
 # ホストマシン（Docker の外）で一度だけ実行してください。
-# clasp OAuth token と Firebase Service Account を準備し、
-# GitHub Actions 用の Secrets 値を出力します。
+# Firebase Service Account を準備し、GitHub Actions 用の Secrets 値を出力します。
 #
 # Usage:
 #   bash scripts/setup_auth.sh
@@ -25,55 +24,10 @@ warn()    { echo "  ⚠ $*"; }
 err()     { echo "  ✗ [ERROR] $*" >&2; }
 
 # ─────────────────────────────────────────────
-# Step 1: clasp 認証セットアップ
-# ─────────────────────────────────────────────
-setup_clasp_credentials() {
-  section "Step 1: clasp (GAS) 認証"
-  echo
-  echo "  Google Apps Script へのデプロイに必要な OAuth token を準備します。"
-  echo "  GAS はユーザー OAuth コンテキストが必須なため、Service Account は使えません。"
-  echo
-
-  local clasprc="$HOME/.clasprc.json"
-
-  if [[ -f "$clasprc" ]] && grep -q '"token"' "$clasprc" 2>/dev/null; then
-    ok "~/.clasprc.json が既に存在します（ログイン済み）"
-  else
-    warn "~/.clasprc.json が見つかりません。clasp login を実行します..."
-    echo
-    echo "  ブラウザが開きます。Google アカウントで認証してください。"
-    hr
-    echo
-    (cd "$PROJECT_ROOT/gas_api" && npx clasp login)
-    echo
-    if ! grep -q '"token"' "$clasprc" 2>/dev/null; then
-      err "ログインが完了しませんでした。再度実行してください。"
-      exit 1
-    fi
-    ok "clasp ログイン完了"
-  fi
-
-  # GitHub Actions Secret 用に base64 エンコード
-  echo
-  section "  GitHub Secret: CLASPRC_JSON"
-  echo
-  echo "  以下の値をコピーして GitHub Actions Secret に登録してください："
-  echo "  Settings → Secrets and variables → Actions → New repository secret"
-  echo
-  echo "  Secret 名: CLASPRC_JSON"
-  echo "  Secret 値:"
-  echo
-  base64 -w 0 "$clasprc"
-  echo
-  echo
-  ok "clasp セットアップ完了"
-}
-
-# ─────────────────────────────────────────────
-# Step 2: Firebase Service Account セットアップ
+# Step 1: Firebase Service Account セットアップ
 # ─────────────────────────────────────────────
 setup_firebase_credentials() {
-  section "Step 2: Firebase Service Account (GCP)"
+  section "Step 1: Firebase Service Account (GCP)"
   echo
   echo "  Firebase Hosting のデプロイに必要な Service Account JSON を準備します。"
   echo
@@ -142,7 +96,6 @@ _write_env_and_show_secret() {
 
   # .env を更新（既存エントリがあれば上書き、なければ追記）
   if [[ -f "$ENV_FILE" ]]; then
-    # 既存の GOOGLE_APPLICATION_CREDENTIALS_HOST_PATH を更新
     if grep -q '^GOOGLE_APPLICATION_CREDENTIALS_HOST_PATH=' "$ENV_FILE"; then
       sed -i "s|^GOOGLE_APPLICATION_CREDENTIALS_HOST_PATH=.*|GOOGLE_APPLICATION_CREDENTIALS_HOST_PATH=$dest|" "$ENV_FILE"
     else
@@ -169,21 +122,13 @@ _write_env_and_show_secret() {
 }
 
 # ─────────────────────────────────────────────
-# Step 3: 検証
+# Step 2: 検証
 # ─────────────────────────────────────────────
 verify_setup() {
-  section "Step 3: セットアップ検証"
+  section "Step 2: セットアップ検証"
   echo
 
   local all_ok=true
-
-  # clasp チェック
-  if [[ -f "$HOME/.clasprc.json" ]] && grep -q '"token"' "$HOME/.clasprc.json"; then
-    ok "clasp: ~/.clasprc.json にトークンがあります"
-  else
-    warn "clasp: ~/.clasprc.json が見つかりません"
-    all_ok=false
-  fi
 
   # .env チェック
   if [[ -f "$ENV_FILE" ]]; then
@@ -211,12 +156,6 @@ verify_setup() {
     echo
     echo "  # 全デプロイ"
     echo "  docker-compose run --rm deploy"
-    echo
-    echo "  # GAS のみ"
-    echo "  docker-compose run --rm deploy bash deploy.sh --gas-only"
-    echo
-    echo "  # Flutter + Firebase のみ"
-    echo "  docker-compose run --rm deploy bash deploy.sh --flutter-only"
   else
     warn "セットアップが不完全です。上記のエラーを確認してください。"
     exit 1
@@ -231,7 +170,6 @@ echo "  Mahjong Dashboard — 初回認証セットアップ"
 echo "  このスクリプトはホストマシン（Docker の外）で実行してください。"
 echo
 
-setup_clasp_credentials
 setup_firebase_credentials
 verify_setup
 
