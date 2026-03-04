@@ -37,7 +37,7 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
     _progress = CurvedAnimation(
@@ -101,7 +101,14 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
           child: AnimatedBuilder(
             animation: _progress,
             builder: (context, _) {
-              final currentMaxX = _progress.value * _maxX;
+              // データが存在する最終日を上限にすることで、
+              // 日数に関わらず「端に達するまで1秒」に統一される
+              final dataMaxX = allSpotsList.fold<double>(1.0, (m, spots) {
+                if (spots.isEmpty) return m;
+                final last = spots.last.x;
+                return last > m ? last : m;
+              });
+              final currentMaxX = _progress.value * dataMaxX;
 
               final lineBars =
                   players.asMap().entries.map((entry) {
