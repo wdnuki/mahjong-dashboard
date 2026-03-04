@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/hanchan/hanchan_screen.dart';
+import '../screens/hanchan/hanchan_summary_screen.dart';
 
 class KawaiCupApp extends StatelessWidget {
   const KawaiCupApp({super.key});
@@ -15,7 +15,7 @@ class KawaiCupApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const HanchanScreen(),
+      home: const HanchanSummaryScreen(),
     );
   }
 }
