@@ -37,6 +37,7 @@ deploy_hosting() {
 
   log "→ flutter build web"
   (cd "$FLUTTER_DIR" && flutter build web \
+    --pwa-strategy=none \
     --dart-define=API_BASE_URL="$API_URL" \
     --base-href /)
 
