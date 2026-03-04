@@ -23,5 +23,11 @@ RUN mkdir -p /root/.config/configstore && \
     printf '{"analytics":{"optOut":true}}' \
     > /root/.config/configstore/firebase-tools.json
 
+# gcloud CLI
+RUN curl -fsSL https://sdk.cloud.google.com | bash -s -- --disable-prompts --install-dir=/opt \
+    && ln -s /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud \
+    && gcloud config set core/disable_usage_reporting true --installation \
+    && gcloud components install alpha --quiet 2>/dev/null || true
+
 WORKDIR /workspace
 CMD ["bash"]

@@ -7,9 +7,13 @@ services:
       - .:/workspace
       # Flutter パッケージキャッシュ
       - pub-cache:/root/.pub-cache
+      # gcloud 認証情報 (ホストの ~/.config/gcloud をマウント)
+      - ${GCLOUD_CONFIG_DIR:-~/.config/gcloud}:/root/.config/gcloud:ro
     environment:
       # firebase login:ci で取得したトークンを .env に設定する
       - FIREBASE_TOKEN=${FIREBASE_TOKEN:?Run 'firebase login:ci' and set FIREBASE_TOKEN in .env}
+      # gcloud デプロイ対象プロジェクト
+      - CLOUDSDK_CORE_PROJECT=${GCLOUD_PROJECT:-mahjong-dashboard-e72c9}
     working_dir: /workspace
     command: bash deploy.sh all
     stdin_open: true
