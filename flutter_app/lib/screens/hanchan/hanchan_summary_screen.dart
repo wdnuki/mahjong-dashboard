@@ -79,22 +79,30 @@ class _SummaryList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      itemCount: entries.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final e = entries[index];
-        return ListTile(
-          leading: Text(
-            e.kanriDate,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: Colors.grey[600]),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(
+            Theme.of(context).colorScheme.primaryContainer,
           ),
-          title: Text(e.summary),
-        );
-      },
+          columns: const [
+            DataColumn(label: Text('日付')),
+            DataColumn(label: Text('結果')),
+          ],
+          rows: entries.map((e) {
+            return DataRow(
+              cells: [
+                DataCell(Text(
+                  e.kanriDate,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                )),
+                DataCell(Text(e.summary)),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 }
