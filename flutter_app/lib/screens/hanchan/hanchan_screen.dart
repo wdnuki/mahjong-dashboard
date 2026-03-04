@@ -3,6 +3,7 @@ import '../../models/hanchan_entry.dart';
 import '../../providers/hanchan_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/loading_indicator.dart';
+import 'hanchan_summary_screen.dart';
 
 class HanchanScreen extends StatefulWidget {
   const HanchanScreen({super.key});
@@ -42,6 +43,15 @@ class _HanchanScreenState extends State<HanchanScreen> {
               year: _notifier.year,
               month: _notifier.month,
               onChanged: (y, m) => _notifier.load(year: y, month: m),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.summarize),
+            tooltip: '半荘サマリ',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const HanchanSummaryScreen()),
             ),
           ),
           IconButton(

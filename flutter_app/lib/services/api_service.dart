@@ -5,6 +5,7 @@ import '../models/participant.dart';
 import '../models/participant_history.dart';
 import '../models/relation.dart';
 import '../models/hanchan_entry.dart';
+import '../models/hanchan_summary.dart';
 
 /// Cloud Functions API との通信を担当するサービス
 ///
@@ -71,6 +72,26 @@ class ApiService {
   ) async {
     final data = await _get('history', null, {'id': participantId});
     return data.map(ParticipantHistory.fromJson).toList();
+  }
+
+  // Python Cloud Functions (asia-northeast1) — V_HANCHANS_HEADER
+  static const String _summaryApiUrl = String.fromEnvironment(
+    'SUMMARY_API_URL',
+    defaultValue:
+        'https://asia-northeast1-mahjong-dashboard-e72c9.cloudfunctions.net/mahjong-api',
+  );
+
+  Future<List<HanchanSummary>> fetchHanchanSummary() async {
+    final response = await _client
+        .get(Uri.parse(_summaryApiUrl))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      throw Exception('HTTP ${response.statusCode}: ${response.body}');
+    }
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list
+        .map((e) => HanchanSummary.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   void dispose() => _client.close();
