@@ -97,7 +97,9 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
       final last = spots.last.x;
       return last > m ? last : m;
     });
-    final chartMaxX = dataMaxX + _chartRightPad;
+    // チャートのX上限は常に3/31固定（右余白付き）
+    // アニメーションの終点 dataMaxX とは別管理
+    const chartMaxX = 31.0 + _chartRightPad;
 
     // Y軸範囲（0を必ず含む）
     final allValues = [
