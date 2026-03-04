@@ -89,15 +89,7 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1A1A1A),
-          elevation: 0,
-        ),
-      ),
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: const Text('カワイカップ特設ダッシュボード'),
           actions: [
@@ -123,7 +115,6 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
                     ),
                   )
                 : _buildBody(),
-      ),
     );
   }
 

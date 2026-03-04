@@ -22,7 +22,9 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
   late final AnimationController _controller;
   late final Animation<double> _progress;
 
-  static const _maxX = 31.0;
+  static const _chartRightPad = 2.5; // ラベル用右余白
+  static const _leftReserved = 48.0;
+  static const _bottomReserved = 32.0;
   static const _goldColor = Color(0xFFFFD700);
   static const _playerColors = [
     Color(0xFF4CAF50),
@@ -72,6 +74,10 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
     return result;
   }
 
+  Color _colorOf(int playerIndex, int firstIdx) => playerIndex == firstIdx
+      ? _goldColor
+      : _playerColors[playerIndex % _playerColors.length];
+
   @override
   Widget build(BuildContext context) {
     final players = widget.players;
@@ -81,10 +87,17 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
     final allSpotsList = players.map((p) {
       return [
         const FlSpot(0, 0),
-        ...p.scores
-            .map((s) => FlSpot(s.dayOfMonth.toDouble(), s.cumulative)),
+        ...p.scores.map((s) => FlSpot(s.dayOfMonth.toDouble(), s.cumulative)),
       ];
     }).toList();
+
+    // データの最終X値
+    final dataMaxX = allSpotsList.fold<double>(1.0, (m, spots) {
+      if (spots.isEmpty) return m;
+      final last = spots.last.x;
+      return last > m ? last : m;
+    });
+    final chartMaxX = dataMaxX + _chartRightPad;
 
     // Y軸範囲（0を必ず含む）
     final allValues = [
@@ -93,7 +106,13 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
     ];
     final minY = allValues.reduce(min);
     final maxY = allValues.reduce(max);
-    final yPad = ((maxY - minY) * 0.12).clamp(10.0, double.infinity);
+    final yPad = ((maxY - minY) * 0.15).clamp(15.0, double.infinity);
+    final chartMinY = minY - yPad;
+    final chartMaxY = maxY + yPad;
+
+    // 凡例：最終スコア降順
+    final sortedEntries = [...players.asMap().entries.toList()]
+      ..sort((a, b) => b.value.finalScore.compareTo(a.value.finalScore));
 
     return Column(
       children: [
@@ -101,39 +120,43 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
           child: AnimatedBuilder(
             animation: _progress,
             builder: (context, _) {
-              // データが存在する最終日を上限にすることで、
-              // 日数に関わらず「端に達するまで1秒」に統一される
-              final dataMaxX = allSpotsList.fold<double>(1.0, (m, spots) {
-                if (spots.isEmpty) return m;
-                final last = spots.last.x;
-                return last > m ? last : m;
-              });
               final currentMaxX = _progress.value * dataMaxX;
+              // ラベルは92%以降でフェードイン
+              final labelOpacity =
+                  ((_progress.value - 0.92) / 0.08).clamp(0.0, 1.0);
 
-              final lineBars =
-                  players.asMap().entries.map((entry) {
+              final lineBars = players.asMap().entries.map((entry) {
                 final i = entry.key;
                 final isFirst = i == firstIdx;
-                final color = isFirst
-                    ? _goldColor
-                    : _playerColors[i % _playerColors.length];
-                final spots =
-                    _visibleSpots(allSpotsList[i], currentMaxX);
+                final color = _colorOf(i, firstIdx);
+                final spots = _visibleSpots(allSpotsList[i], currentMaxX);
 
                 return LineChartBarData(
                   spots: spots,
                   color: color,
-                  barWidth: isFirst ? 4 : 3,
+                  barWidth: isFirst ? 3 : 2,
                   isCurved: true,
                   curveSmoothness: 0.25,
-                  dotData: const FlDotData(show: false),
+                  dotData: FlDotData(
+                    show: true,
+                    checkToShowDot: (spot, barData) =>
+                        barData.spots.isNotEmpty &&
+                        spot.x == barData.spots.last.x,
+                    getDotPainter: (spot, percent, barData, index) =>
+                        FlDotCirclePainter(
+                      radius: isFirst ? 4.0 : 3.0,
+                      color: color,
+                      strokeWidth: 1.5,
+                      strokeColor: Colors.white.withOpacity(0.6),
+                    ),
+                  ),
                   belowBarData: BarAreaData(
                     show: true,
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        color.withOpacity(0.25),
+                        color.withOpacity(0.18),
                         color.withOpacity(0.0),
                       ],
                     ),
@@ -141,109 +164,177 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
                 );
               }).toList();
 
-              return LineChart(
-                duration: Duration.zero,
-                LineChartData(
-                  minX: 0,
-                  maxX: _maxX,
-                  minY: minY - yPad,
-                  maxY: maxY + yPad,
-                  lineBarsData: lineBars,
-                  lineTouchData: LineTouchData(
-                    enabled: true,
-                    touchTooltipData: LineTouchTooltipData(
-                      tooltipBgColor: const Color(0xFF2C2C2C),
-                      getTooltipItems: (spots) => spots.map((spot) {
-                        final name = players[spot.barIndex].name;
-                        final sign = spot.y >= 0 ? '+' : '';
-                        return LineTooltipItem(
-                          '$name\n$sign${spot.y.toStringAsFixed(1)}',
-                          const TextStyle(
-                              color: Colors.white, fontSize: 12),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 48,
-                        getTitlesWidget: (value, meta) => Text(
-                          value.toInt().toString(),
-                          style: const TextStyle(
-                              color: Colors.grey, fontSize: 10),
+              return LayoutBuilder(
+                builder: (ctx, constraints) {
+                  final W = constraints.maxWidth;
+                  final H = constraints.maxHeight;
+                  final dataW = W - _leftReserved;
+                  final dataH = H - _bottomReserved;
+
+                  // データ座標 → ピクセル座標
+                  double xPx(double x) =>
+                      _leftReserved + x / chartMaxX * dataW;
+                  double yPx(double y) =>
+                      (1 - (y - chartMinY) / (chartMaxY - chartMinY)) * dataH;
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      LineChart(
+                        duration: Duration.zero,
+                        LineChartData(
+                          minX: 0,
+                          maxX: chartMaxX,
+                          minY: chartMinY,
+                          maxY: chartMaxY,
+                          lineBarsData: lineBars,
+                          extraLinesData: ExtraLinesData(
+                            verticalLines: [
+                              VerticalLine(
+                                x: 14,
+                                color: Colors.grey.withOpacity(0.35),
+                                strokeWidth: 1,
+                                dashArray: [4, 4],
+                                label: VerticalLineLabel(
+                                  show: true,
+                                  alignment: Alignment.topCenter,
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 10,
+                                  ),
+                                  labelResolver: (_) => '応援先決定',
+                                ),
+                              ),
+                            ],
+                          ),
+                          lineTouchData: LineTouchData(
+                            enabled: true,
+                            touchTooltipData: LineTouchTooltipData(
+                              tooltipBgColor: const Color(0xFF2C2C2C),
+                              getTooltipItems: (spots) => spots.map((spot) {
+                                final name = players[spot.barIndex].name;
+                                final sign = spot.y >= 0 ? '+' : '';
+                                return LineTooltipItem(
+                                  '$name\n$sign${spot.y.toStringAsFixed(1)}',
+                                  const TextStyle(
+                                      color: Colors.white, fontSize: 12),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          titlesData: FlTitlesData(
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: _leftReserved,
+                                getTitlesWidget: (value, meta) => Text(
+                                  value.toInt().toString(),
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 10),
+                                ),
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: _bottomReserved,
+                                interval: 5,
+                                getTitlesWidget: (value, meta) {
+                                  final d = value.toInt();
+                                  if (d != 0 && d % 5 != 0 && d != 31) {
+                                    return const SizedBox();
+                                  }
+                                  final label = d == 0 ? '開始' : '3/$d';
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(label,
+                                        style: const TextStyle(
+                                            color: Colors.grey, fontSize: 10)),
+                                  );
+                                },
+                              ),
+                            ),
+                            topTitles: const AxisTitles(
+                                sideTitles: SideTitles(
+                                    showTitles: false, reservedSize: 0)),
+                            rightTitles: const AxisTitles(
+                                sideTitles: SideTitles(
+                                    showTitles: false, reservedSize: 0)),
+                          ),
+                          gridData: FlGridData(
+                            show: true,
+                            drawVerticalLine: false,
+                            getDrawingHorizontalLine: (_) => FlLine(
+                              color: Colors.grey.withOpacity(0.15),
+                              strokeWidth: 1,
+                            ),
+                          ),
+                          borderData: FlBorderData(
+                            show: true,
+                            border: Border.all(
+                                color: Colors.grey.withOpacity(0.3)),
+                          ),
                         ),
                       ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 32,
-                        interval: 5,
-                        getTitlesWidget: (value, meta) {
-                          final d = value.toInt();
-                          if (d != 0 && d % 5 != 0 && d != 31) {
-                            return const SizedBox();
-                          }
-                          final label = d == 0 ? '開始' : '3/$d';
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(label,
-                                style: const TextStyle(
-                                    color: Colors.grey, fontSize: 10)),
+                      // 最終スコアラベル（アニメーション後フェードイン）
+                      if (labelOpacity > 0)
+                        ...players.asMap().entries.map((entry) {
+                          final i = entry.key;
+                          final p = entry.value;
+                          if (p.scores.isEmpty) return const SizedBox.shrink();
+                          final finalScore = p.finalScore;
+                          final finalX = p.scores.last.dayOfMonth.toDouble();
+                          final color = _colorOf(i, firstIdx);
+                          final label = finalScore >= 0
+                              ? '+${finalScore.toInt()}'
+                              : '${finalScore.toInt()}';
+
+                          return Positioned(
+                            left: xPx(finalX) + 5,
+                            top: yPx(finalScore) - 7,
+                            child: Opacity(
+                              opacity: labelOpacity,
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           );
-                        },
-                      ),
-                    ),
-                    topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.grey.withOpacity(0.15),
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border:
-                        Border.all(color: Colors.grey.withOpacity(0.3)),
-                  ),
-                ),
+                        }).toList(),
+                    ],
+                  );
+                },
               );
             },
           ),
         ),
         const SizedBox(height: 10),
-        // 凡例
+        // 凡例（最終スコア降順）
         Wrap(
           spacing: 16,
           runSpacing: 6,
           alignment: WrapAlignment.center,
-          children: players.asMap().entries.map((entry) {
+          children: sortedEntries.map((entry) {
             final i = entry.key;
+            final player = entry.value;
             final isFirst = i == firstIdx;
-            final color = isFirst
-                ? _goldColor
-                : _playerColors[i % _playerColors.length];
+            final color = _colorOf(i, firstIdx);
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(width: 18, height: 3, color: color),
                 const SizedBox(width: 4),
                 Text(
-                  isFirst ? '👑 ${entry.value.name}' : entry.value.name,
+                  isFirst ? '👑 ${player.name}' : player.name,
                   style: TextStyle(
                     color: isFirst ? _goldColor : Colors.grey[300],
                     fontSize: 12,
-                    fontWeight: isFirst
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+                    fontWeight:
+                        isFirst ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ],

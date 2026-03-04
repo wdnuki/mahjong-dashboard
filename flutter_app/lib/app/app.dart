@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/hanchan/hanchan_summary_screen.dart';
+import '../screens/kawaicup/kawaicup_dashboard_screen.dart';
 
 class KawaiCupApp extends StatelessWidget {
   const KawaiCupApp({super.key});
@@ -7,15 +7,19 @@ class KawaiCupApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kawai Cup Dashboard',
+      title: 'カワイカップ特設ダッシュボード',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFE91E8C),
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1A1A1A),
+          elevation: 0,
         ),
-        useMaterial3: true,
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFFFD700),
+        ),
       ),
-      home: const HanchanSummaryScreen(),
+      home: const KawaiCupDashboardScreen(),
     );
   }
 }
