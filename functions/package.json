@@ -7,7 +7,7 @@
   },
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc --noEmit && esbuild src/index.ts --bundle --minify --platform=node --target=node20 --outfile=lib/index.js --external:@google-cloud/bigquery --external:firebase-admin",
+    "build": "tsc --noEmit && esbuild src/index.ts --bundle --minify --platform=node --target=node20 --outfile=lib/index.js --external:@google-cloud/bigquery --external:firebase-admin --external:firebase-functions",
     "build:watch": "tsc --watch",
     "predeploy": "npm run build"
   },

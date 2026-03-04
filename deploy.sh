@@ -20,8 +20,17 @@ deploy_functions() {
   log "→ functions: npm install"
   (cd "$SCRIPT_DIR/functions" && npm install)
 
+  # Firebase CLI のバックエンド仕様検出をサブプロセスではなくファイル経由で行う。
+  # (WSL2 環境では CLI のサブプロセス起動が失敗するため事前生成で回避)
+  log "→ functions: generate functions.yaml"
+  (cd "$SCRIPT_DIR/functions" && \
+    FUNCTIONS_MANIFEST_OUTPUT_PATH=./functions.yaml \
+    node_modules/.bin/firebase-functions .)
+
   log "→ firebase deploy --only functions"
-  (cd "$SCRIPT_DIR" && firebase deploy --only functions --non-interactive)
+  (cd "$SCRIPT_DIR" && firebase deploy --only functions --non-interactive --force)
+
+  rm -f "$SCRIPT_DIR/functions/functions.yaml"
   log "✓ Cloud Functions デプロイ完了"
 }
 
