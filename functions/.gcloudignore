@@ -1,4 +1,0 @@
-# Cloud Functions ソースアップロード時の除外ファイル
-node_modules/
-lib/
-*.md
