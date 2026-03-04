@@ -56,5 +56,17 @@ class ApiService {
         .toList();
   }
 
+  Future<String?> fetchLastImportedAt() async {
+    final url = '$_apiBaseUrl/kawaicup/last-imported';
+    final response = await _client
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      throw Exception('HTTP ${response.statusCode}: ${response.body}');
+    }
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return data['LAST_IMPORTED_AT'] as String?;
+  }
+
   void dispose() => _client.close();
 }

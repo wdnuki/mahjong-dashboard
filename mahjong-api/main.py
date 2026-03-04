@@ -50,6 +50,12 @@ FROM daily
 ORDER BY KANRI_DATE
 """
 
+SQL_LAST_IMPORTED = """
+SELECT
+  FORMAT_DATETIME('%Y/%m/%d %H:%M', MAX(IMPORTED_AT)) AS LAST_IMPORTED_AT
+FROM `mahjonganalyzer.MM.J_IMPORT_LOG`
+"""
+
 SQL_TOP_SCORE = """
 SELECT
   FORMAT_DATE('%Y/%m/%d', C.KANRI_DATE) AS KANRI_DATE,
@@ -85,6 +91,12 @@ def handle_cumulative(request):
     return (jsonify(data), 200, CORS_HEADERS)
 
 
+def handle_last_imported(request):
+    rows = list(bq.query(SQL_LAST_IMPORTED).result())
+    val = rows[0].LAST_IMPORTED_AT if rows else None
+    return (jsonify({"LAST_IMPORTED_AT": val}), 200, CORS_HEADERS)
+
+
 def handle_top_score(request):
     rows = bq.query(SQL_TOP_SCORE).result()
     data = [
@@ -108,6 +120,8 @@ def app(request):
             return handle_cumulative(request)
         elif path == "/kawaicup/top-score":
             return handle_top_score(request)
+        elif path == "/kawaicup/last-imported":
+            return handle_last_imported(request)
         else:
             return handle_summary(request)
     except Exception as e:

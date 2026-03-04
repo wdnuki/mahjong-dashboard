@@ -27,12 +27,16 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
   static const _bottomReserved = 32.0;
   static const _goldColor = Color(0xFFFFD700);
   static const _playerColors = [
-    Color(0xFF4CAF50),
-    Color(0xFF00BCD4),
-    Color(0xFF9C27B0),
-    Color(0xFFFF9800),
-    Color(0xFF2196F3),
-    Color(0xFFE91E63),
+    Color(0xFF4CAF50),   // Green
+    Color(0xFF00BCD4),   // Cyan
+    Color(0xFF9C27B0),   // Purple
+    Color(0xFFFF9800),   // Orange
+    Color(0xFF2196F3),   // Blue
+    Color(0xFFE91E63),   // Pink
+    Color(0xFFF44336),   // Red
+    Color(0xFF8BC34A),   // Light Green
+    Color(0xFFFF5722),   // Deep Orange
+    Color(0xFF607D8B),   // Blue Grey
   ];
 
   @override
@@ -91,12 +95,20 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
       ];
     }).toList();
 
-    // データの最終X値
+    // データの最終X値（全プレイヤー中の最大日）
     final dataMaxX = allSpotsList.fold<double>(1.0, (m, spots) {
       if (spots.isEmpty) return m;
       final last = spots.last.x;
       return last > m ? last : m;
     });
+
+    // 全プレイヤーを dataMaxX まで横ばいで延長（対戦のない人の線を揃える）
+    final extendedSpotsList = List.generate(allSpotsList.length, (i) {
+      final spots = allSpotsList[i];
+      if (spots.isEmpty || spots.last.x >= dataMaxX) return spots;
+      return [...spots, FlSpot(dataMaxX, spots.last.y)];
+    });
+
     // チャートのX上限は常に3/31固定（右余白付き）
     // アニメーションの終点 dataMaxX とは別管理
     const chartMaxX = 31.0 + _chartRightPad;
@@ -131,7 +143,7 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
                 final i = entry.key;
                 final isFirst = i == firstIdx;
                 final color = _colorOf(i, firstIdx);
-                final spots = _visibleSpots(allSpotsList[i], currentMaxX);
+                final spots = _visibleSpots(extendedSpotsList[i], currentMaxX);
 
                 return LineChartBarData(
                   spots: spots,
@@ -204,7 +216,22 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
                                     color: Colors.grey,
                                     fontSize: 10,
                                   ),
-                                  labelResolver: (_) => '応援先決定',
+                                  labelResolver: (_) => '応援締め切り',
+                                ),
+                              ),
+                              VerticalLine(
+                                x: 31,
+                                color: Colors.amber.withOpacity(0.45),
+                                strokeWidth: 1,
+                                dashArray: [4, 4],
+                                label: VerticalLineLabel(
+                                  show: true,
+                                  alignment: Alignment.topCenter,
+                                  style: const TextStyle(
+                                    color: Colors.amber,
+                                    fontSize: 10,
+                                  ),
+                                  labelResolver: (_) => '1stラウンド集計',
                                 ),
                               ),
                             ],
@@ -240,10 +267,11 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
                               sideTitles: SideTitles(
                                 showTitles: true,
                                 reservedSize: _bottomReserved,
-                                interval: 5,
+                                interval: 1,
                                 getTitlesWidget: (value, meta) {
                                   final d = value.toInt();
-                                  if (d != 0 && d % 5 != 0 && d != 31) {
+                                  const showDays = {0, 7, 14, 21, 28, 31};
+                                  if (!showDays.contains(d)) {
                                     return const SizedBox();
                                   }
                                   final label = d == 0 ? '開始' : '3/$d';
@@ -285,7 +313,8 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
                           final p = entry.value;
                           if (p.scores.isEmpty) return const SizedBox.shrink();
                           final finalScore = p.finalScore;
-                          final finalX = p.scores.last.dayOfMonth.toDouble();
+                          // 延長後の端点（全員 dataMaxX に揃えた）
+                          final finalX = dataMaxX;
                           final color = _colorOf(i, firstIdx);
                           final label = finalScore >= 0
                               ? '+${finalScore.toInt()}'

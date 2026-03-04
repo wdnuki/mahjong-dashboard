@@ -21,6 +21,7 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
 
   List<CumulativeScore> _cumulative = [];
   List<TopScore> _topScores = [];
+  String? _lastImportedAt;
   bool _isLoading = true;
   String? _error;
 
@@ -57,10 +58,12 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
       final results = await Future.wait([
         _api.fetchCumulativeScores(),
         _api.fetchTopScores(),
+        _api.fetchLastImportedAt(),
       ]);
       setState(() {
         _cumulative = results[0] as List<CumulativeScore>;
         _topScores = results[1] as List<TopScore>;
+        _lastImportedAt = results[2] as String?;
       });
       _titleController.forward(from: 0);
     } catch (e) {
@@ -90,31 +93,31 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('カワイカップ特設ダッシュボード'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _load,
-            ),
-          ],
-        ),
-        body: _isLoading
-            ? const LoadingIndicator()
-            : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('エラー: $_error',
-                            style: const TextStyle(color: Colors.red)),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                            onPressed: _load, child: const Text('再試行')),
-                      ],
-                    ),
-                  )
-                : _buildBody(),
+      appBar: AppBar(
+        title: const Text('カワイカップ特設ダッシュボード'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _load,
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const LoadingIndicator()
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('エラー: $_error',
+                          style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                          onPressed: _load, child: const Text('再試行')),
+                    ],
+                  ),
+                )
+              : _buildBody(),
     );
   }
 
@@ -138,24 +141,26 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // タイトル（フェードイン）
+          // タイトル + 最終更新（フェードイン）
           FadeTransition(
             opacity: _titleFade,
-            child: const Text(
-              '累積スコア推移',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          FadeTransition(
-            opacity: _titleFade,
-            child: const Text(
-              '3/1 スタート',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '累積スコア推移',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_lastImportedAt != null)
+                  Text(
+                    '最終更新: $_lastImportedAt',
+                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -189,8 +194,7 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
 
           // ランキングカード（遅延フェードイン）
           if (_topScores.isEmpty)
-            const Text('データがありません',
-                style: TextStyle(color: Colors.grey))
+            const Text('データがありません', style: TextStyle(color: Colors.grey))
           else
             ...List.generate(_topScores.length, (i) {
               return RankingCard(
