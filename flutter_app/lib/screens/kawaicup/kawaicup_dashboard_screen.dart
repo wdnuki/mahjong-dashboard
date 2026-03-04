@@ -95,12 +95,6 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('カワイカップ特設ダッシュボード'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _load,
-          ),
-        ],
       ),
       body: _isLoading
           ? const LoadingIndicator()
