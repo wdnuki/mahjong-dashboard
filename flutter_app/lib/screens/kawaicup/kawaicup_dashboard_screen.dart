@@ -203,7 +203,137 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
                 delay: Duration(milliseconds: 300 + i * 120),
               );
             }),
+
+          const SizedBox(height: 32),
+
+          // Final Round 対戦カード
+          FadeTransition(
+            opacity: _titleFade,
+            child: const Text(
+              'Final Round 対戦カード',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          if (players.isNotEmpty)
+            _FinalRoundTable(
+              top4: ([...players]
+                    ..sort((a, b) => b.finalScore.compareTo(a.finalScore)))
+                  .take(4)
+                  .toList(),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Final Round 対戦カード ─────────────────────────────────────
+
+class _FinalRoundTable extends StatelessWidget {
+  const _FinalRoundTable({required this.top4});
+  final List<Player> top4;
+
+  /// 累積スコアの半分を [0, 100] でクランプ
+  static double _carryOver(double score) => (score / 2.0).clamp(0.0, 100.0);
+
+  static String _fmt(double v) => v.toStringAsFixed(1);
+
+  @override
+  Widget build(BuildContext context) {
+    const headerStyle = TextStyle(
+      color: Colors.grey,
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+    );
+    const valueStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 13,
+    );
+    const emptyStyle = TextStyle(
+      color: Colors.transparent,
+      fontSize: 13,
+    );
+
+    Widget headerCell(String text) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            text,
+            style: headerStyle,
+            textAlign:
+                text == 'プレイヤー' ? TextAlign.left : TextAlign.center,
+          ),
+        );
+
+    Widget valueCell(String text, {TextStyle? style}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Text(
+            text,
+            style: style ?? valueStyle,
+            textAlign: TextAlign.center,
+          ),
+        );
+
+    return Card(
+      color: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Table(
+          columnWidths: const {
+            0: FlexColumnWidth(2.4),
+            1: FlexColumnWidth(1.4),
+            2: FlexColumnWidth(1.4),
+            3: FlexColumnWidth(1.4),
+            4: FlexColumnWidth(1.4),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            TableRow(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                      color: Colors.grey.withOpacity(0.25), width: 1),
+                ),
+              ),
+              children: [
+                headerCell('プレイヤー'),
+                headerCell('持越'),
+                headerCell('1半荘目'),
+                headerCell('2半荘目'),
+                headerCell('合計'),
+              ],
+            ),
+            ...top4.asMap().entries.map((entry) {
+              final player = entry.value;
+              final carry = _carryOver(player.finalScore);
+              final carryStr = _fmt(carry);
+              return TableRow(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                        color: Colors.grey.withOpacity(0.1), width: 1),
+                  ),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Text(player.name, style: valueStyle),
+                  ),
+                  valueCell(carryStr),
+                  valueCell('', style: emptyStyle),
+                  valueCell('', style: emptyStyle),
+                  valueCell(carryStr),
+                ],
+              );
+            }).toList(),
+          ],
+        ),
       ),
     );
   }

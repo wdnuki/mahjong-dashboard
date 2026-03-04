@@ -27,16 +27,16 @@ class _AnimatedLineChartState extends State<AnimatedLineChart>
   static const _bottomReserved = 32.0;
   static const _goldColor = Color(0xFFFFD700);
   static const _playerColors = [
-    Color(0xFF4CAF50),   // Green
-    Color(0xFF00BCD4),   // Cyan
-    Color(0xFF9C27B0),   // Purple
-    Color(0xFFFF9800),   // Orange
-    Color(0xFF2196F3),   // Blue
-    Color(0xFFE91E63),   // Pink
-    Color(0xFFF44336),   // Red
-    Color(0xFF8BC34A),   // Light Green
-    Color(0xFFFF5722),   // Deep Orange
-    Color(0xFF607D8B),   // Blue Grey
+    Color(0xFF00E676),   // Vivid Mint Green（濃い緑）
+    Color(0xFF00B0FF),   // Sky Blue
+    Color(0xFFAA00FF),   // Neon Purple
+    Color(0xFFFF9100),   // Amber Orange
+    Color(0xFF2979FF),   // Vivid Blue
+    Color(0xFFFF1744),   // Vivid Red（赤）
+    Color(0xFF1DE9B6),   // Teal
+    Color(0xFFCCFF90),   // Lime Green（黄緑、濃い緑と明確に区別）
+    Color(0xFFFF4081),   // Hot Pink
+    Color(0xFFE040FB),   // Magenta（赤とオレンジと区別）
   ];
 
   @override
