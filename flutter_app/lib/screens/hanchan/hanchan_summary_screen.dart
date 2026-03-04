@@ -3,6 +3,7 @@ import '../../models/hanchan_summary.dart';
 import '../../providers/hanchan_summary_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/loading_indicator.dart';
+import '../kawaicup/kawaicup_dashboard_screen.dart';
 
 class HanchanSummaryScreen extends StatefulWidget {
   const HanchanSummaryScreen({super.key});
@@ -36,6 +37,15 @@ class _HanchanSummaryScreenState extends State<HanchanSummaryScreen> {
       appBar: AppBar(
         title: const Text('半荘サマリ'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.emoji_events),
+            tooltip: 'カワイカップ',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const KawaiCupDashboardScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _notifier.load,

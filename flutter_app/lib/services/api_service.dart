@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/hanchan_summary.dart';
+import '../models/cumulative_score.dart';
+import '../models/top_score.dart';
 
 class ApiService {
-  static const String _summaryApiUrl = String.fromEnvironment(
-    'SUMMARY_API_URL',
+  static const String _apiBaseUrl = String.fromEnvironment(
+    'MAHJONG_API_BASE_URL',
     defaultValue:
         'https://asia-northeast1-mahjong-dashboard-e72c9.cloudfunctions.net/mahjong-api',
   );
@@ -15,7 +17,7 @@ class ApiService {
 
   Future<List<HanchanSummary>> fetchHanchanSummary() async {
     final response = await _client
-        .get(Uri.parse(_summaryApiUrl))
+        .get(Uri.parse(_apiBaseUrl))
         .timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('HTTP ${response.statusCode}: ${response.body}');
@@ -23,6 +25,34 @@ class ApiService {
     final list = jsonDecode(response.body) as List<dynamic>;
     return list
         .map((e) => HanchanSummary.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<CumulativeScore>> fetchCumulativeScores() async {
+    final url = '$_apiBaseUrl/kawaicup/cumulative';
+    final response = await _client
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      throw Exception('HTTP ${response.statusCode}: ${response.body}');
+    }
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list
+        .map((e) => CumulativeScore.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<TopScore>> fetchTopScores() async {
+    final url = '$_apiBaseUrl/kawaicup/top-score';
+    final response = await _client
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      throw Exception('HTTP ${response.statusCode}: ${response.body}');
+    }
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list
+        .map((e) => TopScore.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 

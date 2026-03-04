@@ -2,9 +2,8 @@
 # deploy.sh — Mahjong Dashboard ビルド・デプロイスクリプト
 #
 # Usage:
-#   bash deploy.sh               # functions + hosting + mahjong-api (デフォルト)
+#   bash deploy.sh               # hosting + mahjong-api (デフォルト)
 #   bash deploy.sh all           # 同上
-#   bash deploy.sh functions     # Firebase Cloud Functions (Node.js) のみ
 #   bash deploy.sh hosting       # Flutter ビルド + Firebase Hosting のみ
 #   bash deploy.sh mahjong-api   # Python Cloud Functions (gcloud) のみ
 
@@ -31,23 +30,6 @@ deploy_mahjong_api() {
   log "✓ mahjong-api デプロイ完了"
 }
 
-deploy_functions() {
-  log "→ functions: npm install"
-  (cd "$SCRIPT_DIR/functions" && npm install)
-
-  # Firebase CLI のバックエンド仕様検出をサブプロセスではなくファイル経由で行う。
-  # (WSL2 環境では CLI のサブプロセス起動が失敗するため事前生成で回避)
-  log "→ functions: generate functions.yaml"
-  (cd "$SCRIPT_DIR/functions" && \
-    FUNCTIONS_MANIFEST_OUTPUT_PATH=./functions.yaml \
-    node_modules/.bin/firebase-functions .)
-
-  log "→ firebase deploy --only functions"
-  (cd "$SCRIPT_DIR" && firebase deploy --only functions --non-interactive --force)
-
-  rm -f "$SCRIPT_DIR/functions/functions.yaml"
-  log "✓ Cloud Functions デプロイ完了"
-}
 
 deploy_hosting() {
   log "→ flutter pub get"
@@ -64,12 +46,11 @@ deploy_hosting() {
 }
 
 case "$MODE" in
-  all)          deploy_functions; deploy_hosting; deploy_mahjong_api ;;
-  functions)    deploy_functions ;;
+  all)          deploy_hosting; deploy_mahjong_api ;;
   hosting)      deploy_hosting ;;
   mahjong-api)  deploy_mahjong_api ;;
   *)
-    echo "Usage: deploy.sh [all|functions|hosting|mahjong-api]"
+    echo "Usage: deploy.sh [all|hosting|mahjong-api]"
     exit 1
     ;;
 esac
