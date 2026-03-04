@@ -2,10 +2,11 @@
 # deploy.sh — Mahjong Dashboard ビルド・デプロイスクリプト
 #
 # Usage:
-#   bash deploy.sh           # functions + hosting (デフォルト)
-#   bash deploy.sh all       # 同上
-#   bash deploy.sh functions # Cloud Functions のみ
-#   bash deploy.sh hosting   # Flutter ビルド + Firebase Hosting のみ
+#   bash deploy.sh               # functions + hosting + mahjong-api (デフォルト)
+#   bash deploy.sh all           # 同上
+#   bash deploy.sh functions     # Firebase Cloud Functions (Node.js) のみ
+#   bash deploy.sh hosting       # Flutter ビルド + Firebase Hosting のみ
+#   bash deploy.sh mahjong-api   # Python Cloud Functions (gcloud) のみ
 
 set -euo pipefail
 
@@ -15,6 +16,20 @@ FLUTTER_DIR="$SCRIPT_DIR/flutter_app"
 API_URL="https://mahjong-dashboard-e72c9.web.app/api"
 
 log() { echo "[$(TZ='Asia/Tokyo' date '+%H:%M:%S')] $*"; }
+
+deploy_mahjong_api() {
+  log "→ mahjong-api: gcloud functions deploy"
+  gcloud functions deploy mahjong-api \
+    --gen2 \
+    --runtime python311 \
+    --region asia-northeast1 \
+    --source "$SCRIPT_DIR/mahjong-api" \
+    --entry-point app \
+    --trigger-http \
+    --allow-unauthenticated \
+    --quiet
+  log "✓ mahjong-api デプロイ完了"
+}
 
 deploy_functions() {
   log "→ functions: npm install"
@@ -49,11 +64,12 @@ deploy_hosting() {
 }
 
 case "$MODE" in
-  all)       deploy_functions; deploy_hosting ;;
-  functions) deploy_functions ;;
-  hosting)   deploy_hosting ;;
+  all)          deploy_functions; deploy_hosting; deploy_mahjong_api ;;
+  functions)    deploy_functions ;;
+  hosting)      deploy_hosting ;;
+  mahjong-api)  deploy_mahjong_api ;;
   *)
-    echo "Usage: deploy.sh [all|functions|hosting]"
+    echo "Usage: deploy.sh [all|functions|hosting|mahjong-api]"
     exit 1
     ;;
 esac
