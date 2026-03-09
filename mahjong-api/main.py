@@ -1,4 +1,5 @@
 import functions_framework
+import json
 from flask import jsonify
 from google.cloud import bigquery
 
@@ -110,6 +111,17 @@ def handle_top_score(request):
     return (jsonify(data), 200, CORS_HEADERS)
 
 
+def log_visit(request):
+    visitor = request.args.get("visitor", "") or "無記名"
+    print(json.dumps({
+        "severity": "INFO",
+        "message": f"{visitor}さんがアクセスしました",
+        "visitor": visitor,
+        "ip": request.headers.get("X-Forwarded-For", request.remote_addr),
+        "user_agent": request.user_agent.string,
+    }), flush=True)
+
+
 @functions_framework.http
 def app(request):
     if request.method == "OPTIONS":
@@ -117,6 +129,7 @@ def app(request):
     try:
         path = request.path.rstrip("/")
         if path == "/kawaicup/cumulative":
+            log_visit(request)  # 訪問ログは cumulative の1回だけ
             return handle_cumulative(request)
         elif path == "/kawaicup/top-score":
             return handle_top_score(request)
