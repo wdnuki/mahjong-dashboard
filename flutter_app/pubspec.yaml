@@ -16,6 +16,9 @@ dependencies:
   # Charts for ranking visualization
   fl_chart: ^0.66.2
 
+  # localStorage でユーザー名を永続化
+  shared_preferences: ^2.3.0
+
   cupertino_icons: ^1.0.6
 
 dev_dependencies:

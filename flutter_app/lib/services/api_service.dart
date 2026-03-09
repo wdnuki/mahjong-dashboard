@@ -15,9 +15,14 @@ class ApiService {
 
   ApiService({http.Client? client}) : _client = client ?? http.Client();
 
-  Future<List<HanchanSummary>> fetchHanchanSummary() async {
+  Uri _uri(String path, String visitorName) {
+    return Uri.parse('$_apiBaseUrl$path')
+        .replace(queryParameters: {'visitor': visitorName});
+  }
+
+  Future<List<HanchanSummary>> fetchHanchanSummary(String visitorName) async {
     final response = await _client
-        .get(Uri.parse(_apiBaseUrl))
+        .get(_uri('', visitorName))
         .timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('HTTP ${response.statusCode}: ${response.body}');
@@ -28,10 +33,9 @@ class ApiService {
         .toList();
   }
 
-  Future<List<CumulativeScore>> fetchCumulativeScores() async {
-    final url = '$_apiBaseUrl/kawaicup/cumulative';
+  Future<List<CumulativeScore>> fetchCumulativeScores(String visitorName) async {
     final response = await _client
-        .get(Uri.parse(url))
+        .get(_uri('/kawaicup/cumulative', visitorName))
         .timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('HTTP ${response.statusCode}: ${response.body}');
@@ -42,10 +46,9 @@ class ApiService {
         .toList();
   }
 
-  Future<List<TopScore>> fetchTopScores() async {
-    final url = '$_apiBaseUrl/kawaicup/top-score';
+  Future<List<TopScore>> fetchTopScores(String visitorName) async {
     final response = await _client
-        .get(Uri.parse(url))
+        .get(_uri('/kawaicup/top-score', visitorName))
         .timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('HTTP ${response.statusCode}: ${response.body}');
@@ -56,10 +59,9 @@ class ApiService {
         .toList();
   }
 
-  Future<String?> fetchLastImportedAt() async {
-    final url = '$_apiBaseUrl/kawaicup/last-imported';
+  Future<String?> fetchLastImportedAt(String visitorName) async {
     final response = await _client
-        .get(Uri.parse(url))
+        .get(_uri('/kawaicup/last-imported', visitorName))
         .timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('HTTP ${response.statusCode}: ${response.body}');

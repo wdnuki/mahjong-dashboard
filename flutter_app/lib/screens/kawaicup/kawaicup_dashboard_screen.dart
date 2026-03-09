@@ -3,6 +3,7 @@ import '../../models/cumulative_score.dart';
 import '../../models/top_score.dart';
 import '../../models/player_model.dart';
 import '../../services/api_service.dart';
+import '../../services/user_name_service.dart';
 import '../../widgets/loading_indicator.dart';
 import '../../widgets/animated_line_chart.dart';
 import '../../widgets/ranking_card.dart';
@@ -24,6 +25,7 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
   String? _lastImportedAt;
   bool _isLoading = true;
   String? _error;
+  String _visitorName = '';
 
   late final AnimationController _titleController;
   late final Animation<double> _titleFade;
@@ -39,7 +41,10 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
       parent: _titleController,
       curve: Curves.easeIn,
     );
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _visitorName = await UserNameService.getOrAskName(context);
+      _load();
+    });
   }
 
   @override
@@ -56,9 +61,9 @@ class _KawaiCupDashboardScreenState extends State<KawaiCupDashboardScreen>
     });
     try {
       final results = await Future.wait([
-        _api.fetchCumulativeScores(),
-        _api.fetchTopScores(),
-        _api.fetchLastImportedAt(),
+        _api.fetchCumulativeScores(_visitorName),
+        _api.fetchTopScores(_visitorName),
+        _api.fetchLastImportedAt(_visitorName),
       ]);
       setState(() {
         _cumulative = results[0] as List<CumulativeScore>;
